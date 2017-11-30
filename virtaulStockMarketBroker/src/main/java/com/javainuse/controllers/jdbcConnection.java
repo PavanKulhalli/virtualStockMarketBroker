@@ -21,7 +21,7 @@ public class jdbcConnection {
 		
 		try {
 			connection = DriverManager
-			.getConnection("jdbc:mysql://localhost/stockmarket","root", "");
+			.getConnection("jdbc:mysql://localhost/broker","root", "");
 
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");

@@ -30,8 +30,9 @@ import org.springframework.web.client.RestTemplate;
 public class TestControllerBroker {
 
 	
-	@RequestMapping(value = "/stockMarket", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	public ResponseEntity<ResponseUpgrade> update(@RequestBody ResponseUpgrade response) {
+	@SuppressWarnings("resource")
+	@RequestMapping(value = "/sellorStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	public ResponseEntity<ResponseUpgrade> getSellorStock(@RequestBody ResponseUpgrade response) {
 		if (response != null) {
 			System.out.println("Inhere");
 			jdbcConnection jdbc = new jdbcConnection();
@@ -39,11 +40,24 @@ public class TestControllerBroker {
 
 			PreparedStatement stmt;
 			try {
-				stmt = conn.prepareStatement("UPDATE stockprice SET StockPrice=" + response.getStock_price()
-						+ " WHERE StockName='" + response.getCompany_Name() + "'");
+				
+				//Sellor Shares Updation
+				stmt = conn.prepareStatement("SELECT * FROM sellorStock WHERE sellorStock.sellerName='" + response.getSellerName() + "' AND sellorStock.companyName='"+response.getCompanyName()+ "'");
+				ResultSet rs1  = stmt.executeQuery();
+				System.out.println(rs1 + " records present");
+				if(rs1.wasNull()) {
+					stmt = conn.prepareStatement("INSERT INTO sellorStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
+					int i = stmt.executeUpdate();
+					System.out.println(i + " records inserted");
+				} else {
+					stmt = conn.prepareStatement("UPDATE sellorStock SET stockPrice=" + response.getStockPrice()
+					+"numberOfShares=" + response.getNumberOfShares()
+					+ " WHERE companyName='" + response.getCompanyName() + "sellerName=" + response.getSellerName()
+					+"'");
 
-				int i = stmt.executeUpdate();
-				System.out.println(i + " records updated");
+					int i = stmt.executeUpdate();
+					System.out.println(i + " records updated");
+				}
 			} catch (Exception e) {
 				System.out.println("No Such Company Found");
 			}
@@ -59,6 +73,49 @@ public class TestControllerBroker {
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
 	}
 
+	@SuppressWarnings("resource")
+	@RequestMapping(value = "/buyerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	public ResponseEntity<ResponseUpgrade> getBuyerStock(@RequestBody ResponseUpgrade response) {
+		if (response != null) {
+			System.out.println("Inhere");
+			jdbcConnection jdbc = new jdbcConnection();
+			Connection conn = jdbc.startConnection();
+
+			PreparedStatement stmt;
+			try {
+				//Buyer Shares Updation
+				stmt = conn.prepareStatement("SELECT * FROM buyerStock WHERE buyerStock.buyerName='" + response.getSellerName() + "' AND buyerStock.companyName='"+response.getCompanyName()+ "'");
+				ResultSet rs1  = stmt.executeQuery();
+				System.out.println(rs1 + " records present");
+				if(rs1.wasNull()) {
+					stmt = conn.prepareStatement("INSERT INTO buyerStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
+					int i = stmt.executeUpdate();
+					System.out.println(i + " records inserted");
+				} else {
+					stmt = conn.prepareStatement("UPDATE buyerStock SET stockPrice=" + response.getStockPrice()
+					+"numberOfShares=" + response.getNumberOfShares()
+					+ " WHERE companyName='" + response.getCompanyName() + "buyerName=" + response.getSellerName()
+					+"'");
+
+					int i = stmt.executeUpdate();
+					System.out.println(i + " records updated");
+				}
+			} catch (Exception e) {
+				System.out.println("No Such Company Found");
+			}
+			try {
+
+				postToStockMarket(response);
+
+			} catch (Exception e) {
+				System.out.println("Error in connection with Stock Market");
+			}
+
+		}
+		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
+	}
+	
+	
 	private DiscoveryClient discoveryClient;
 
 	
