@@ -2,6 +2,7 @@ package com.javainuse.controllers;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONException;
@@ -34,7 +35,7 @@ public class TestControllerBroker {
 	@RequestMapping(value = "/sellorStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ResponseUpgrade> getSellorStock(@RequestBody ResponseUpgrade response) {
 		if (response != null) {
-			System.out.println("Inhere");
+			
 			jdbcConnection jdbc = new jdbcConnection();
 			Connection conn = jdbc.startConnection();
 
@@ -61,13 +62,6 @@ public class TestControllerBroker {
 			} catch (Exception e) {
 				System.out.println("No Such Company Found");
 			}
-			try {
-
-				postToStockMarket(response);
-
-			} catch (Exception e) {
-				System.out.println("Error in connection with Stock Market");
-			}
 
 		}
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
@@ -77,7 +71,7 @@ public class TestControllerBroker {
 	@RequestMapping(value = "/buyerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ResponseUpgrade> getBuyerStock(@RequestBody ResponseUpgrade response) {
 		if (response != null) {
-			System.out.println("Inhere");
+			
 			jdbcConnection jdbc = new jdbcConnection();
 			Connection conn = jdbc.startConnection();
 
@@ -103,14 +97,6 @@ public class TestControllerBroker {
 			} catch (Exception e) {
 				System.out.println("No Such Company Found");
 			}
-			try {
-
-				postToStockMarket(response);
-
-			} catch (Exception e) {
-				System.out.println("Error in connection with Stock Market");
-			}
-
 		}
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
 	}
@@ -129,16 +115,71 @@ public class TestControllerBroker {
 
 	}
 
-	/*
-	private void postToClient(ResponseUpgrade response) {
-		List<ServiceInstance> instances = discoveryClient.getInstances("bank");
-		ServiceInstance serviceInstance = instances.get(0);
-		String baseUrl = serviceInstance.getUri().toString();
-		ResponseEntity<?> response1 = new RestTemplate().postForEntity(baseUrl, response, String.class);
-		System.out.println(response1.getStatusCodeValue());
+	
+	private void scheduledJob() {
+
+		new java.util.Timer().schedule(new java.util.TimerTask() {
+			@Override
+			public void run() {
+				
+
+				jdbcConnection jdbc = new jdbcConnection();
+				Connection conn = jdbc.startConnection();
+
+				PreparedStatement stmt;
+				List<String> finalListOfStock = new ArrayList<String>();
+				try {
+					//Buyer Shares Updation
+					stmt = conn.prepareStatement("SELECT * FROM buyerStock");
+					ResultSet rs  = stmt.executeQuery();
+					System.out.println(rs + " records present");
+					double stockPrice;
+					String buyerName, companyName, sellerName;
+					int numberOfSharesToBuy, numberOfSharesToSell, numberOfSharesGot;
+					while (rs.next()) {
+						
+						buyerName = rs.getString(1);
+						companyName = rs.getString(2);
+						numberOfSharesToBuy = rs.getInt(3);
+						
+						stmt = conn.prepareStatement("SELECT * FROM sellorStock WHERE sellorStock.companyName='"+companyName+ "'");
+						ResultSet rs1  = stmt.executeQuery();
+						System.out.println(rs1 + " records present");
+						while (rs1.next() && numberOfSharesToBuy > 0) {
+							sellerName = rs1.getString(1);
+							stockPrice = rs1.getDouble(3);
+							numberOfSharesToSell = rs1.getInt(4);
+							if(numberOfSharesToBuy >= numberOfSharesToSell) {
+								numberOfSharesGot = numberOfSharesToBuy - (numberOfSharesToBuy - numberOfSharesToSell);
+								numberOfSharesToBuy = numberOfSharesToBuy - numberOfSharesGot;
+							} else {
+								numberOfSharesGot = numberOfSharesToSell - (numberOfSharesToSell - numberOfSharesToBuy);
+							}
+							
+							finalListOfStock.add(companyName);
+							finalListOfStock.add(sellerName);
+							finalListOfStock.add(buyerName);
+							finalListOfStock.add(String.valueOf(stockPrice));
+							
+						}
+						
+					}
+					
+				} catch (Exception e) {
+					System.out.println("No Such Company Found");
+				}
+				
+				try {
+					postToStockMarket(response);
+
+				} catch (Exception e) {
+					System.out.println("Error in connection with Stock Market");
+				}
+			}
+		}, 5000);
 
 	}
-	*/
+	
 
 
 }
