@@ -78,17 +78,17 @@ public class TestControllerBroker {
 			PreparedStatement stmt;
 			try {
 				//Buyer Shares Updation
-				stmt = conn.prepareStatement("SELECT * FROM buyerStock WHERE buyerStock.buyerName='" + response.getSellerName() + "' AND buyerStock.companyName='"+response.getCompanyName()+ "'");
+				stmt = conn.prepareStatement("SELECT * FROM buyerStock WHERE buyerStock.buyerName='" + response.getBuyerName() + "' AND buyerStock.companyName='"+response.getCompanyName()+ "'");
 				ResultSet rs1  = stmt.executeQuery();
 				System.out.println(rs1 + " records present");
 				if(rs1.wasNull()) {
-					stmt = conn.prepareStatement("INSERT INTO buyerStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
+					stmt = conn.prepareStatement("INSERT INTO buyerStock VALUES ('"+response.getBuyerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records inserted");
 				} else {
 					stmt = conn.prepareStatement("UPDATE buyerStock SET stockPrice=" + response.getStockPrice()
 					+"numberOfShares=" + response.getNumberOfShares()
-					+ " WHERE companyName='" + response.getCompanyName() + "buyerName=" + response.getSellerName()
+					+ " WHERE companyName='" + response.getCompanyName() + "buyerName=" + response.getBuyerName()
 					+"'");
 
 					int i = stmt.executeUpdate();
@@ -119,6 +119,7 @@ public class TestControllerBroker {
 	private void scheduledJob() {
 
 		new java.util.Timer().schedule(new java.util.TimerTask() {
+			@SuppressWarnings("resource")
 			@Override
 			public void run() {
 				
@@ -135,7 +136,7 @@ public class TestControllerBroker {
 					System.out.println(rs + " records present");
 					double stockPrice;
 					String buyerName, companyName, sellerName;
-					int numberOfSharesToBuy, numberOfSharesToSell, numberOfSharesGot;
+					int numberOfSharesToBuy, numberOfSharesToSell, numberOfSharesBought;
 					while (rs.next()) {
 						
 						buyerName = rs.getString(1);
@@ -150,19 +151,47 @@ public class TestControllerBroker {
 							stockPrice = rs1.getDouble(3);
 							numberOfSharesToSell = rs1.getInt(4);
 							if(numberOfSharesToBuy >= numberOfSharesToSell) {
-								numberOfSharesGot = numberOfSharesToBuy - (numberOfSharesToBuy - numberOfSharesToSell);
-								numberOfSharesToBuy = numberOfSharesToBuy - numberOfSharesGot;
+								numberOfSharesBought = numberOfSharesToBuy - (numberOfSharesToBuy - numberOfSharesToSell);
+								numberOfSharesToBuy = numberOfSharesToBuy - numberOfSharesBought;
+								numberOfSharesToSell = 0;
 							} else {
-								numberOfSharesGot = numberOfSharesToSell - (numberOfSharesToSell - numberOfSharesToBuy);
+								numberOfSharesBought = numberOfSharesToSell - (numberOfSharesToSell - numberOfSharesToBuy);
+								numberOfSharesToBuy = 0;
+								numberOfSharesToSell = numberOfSharesToSell - numberOfSharesToBuy;
 							}
 							
 							finalListOfStock.add(companyName);
 							finalListOfStock.add(sellerName);
 							finalListOfStock.add(buyerName);
 							finalListOfStock.add(String.valueOf(stockPrice));
-							
+							if(numberOfSharesToSell != 0) {
+								stmt = conn.prepareStatement("UPDATE sellorStock SET numberOfShares=" + numberOfSharesToSell
+								+ " WHERE companyName='" + companyName + "sellerName=" + sellerName
+								+"'");
+								int i = stmt.executeUpdate();
+								System.out.println(i + " records updated");
+							} else {
+								stmt = conn.prepareStatement("Delete sellorStock "
+								+ " WHERE companyName='" + companyName + "sellerName=" + sellerName
+								+"'");
+								int i = stmt.executeUpdate();
+								System.out.println(i + " records deleted");
+							}
 						}
-						
+						if(numberOfSharesToBuy != 0) {
+							stmt = conn.prepareStatement("UPDATE buyerStock "
+							+"numberOfShares=" + numberOfSharesToBuy
+							+ " WHERE companyName='" + companyName + "buyerName=" + buyerName
+							+"'");
+							int i = stmt.executeUpdate();
+							System.out.println(i + " records updated");
+						} else {
+							stmt = conn.prepareStatement("Delete buyerStock "
+							+ " WHERE companyName='" + companyName + "buyerName=" + buyerName
+							+"'");
+							int i = stmt.executeUpdate();
+							System.out.println(i + " records deleted");
+						}
 					}
 					
 				} catch (Exception e) {
@@ -170,7 +199,7 @@ public class TestControllerBroker {
 				}
 				
 				try {
-					postToStockMarket(response);
+//					postToStockMarket(response);
 
 				} catch (Exception e) {
 					System.out.println("Error in connection with Stock Market");
