@@ -33,34 +33,38 @@ public class TestControllerBroker {
 	
 	@SuppressWarnings("resource")
 	@RequestMapping(value = "/sellerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	public ResponseEntity<ResponseUpgrade> getSellorStock(@RequestBody ResponseUpgrade response) {
+	public ResponseEntity<ResponseUpgrade> getSellerStock(@RequestBody ResponseUpgrade response) {
 		if (response != null) {
-			
+			System.out.println("In sellerStock");
 			jdbcConnection jdbc = new jdbcConnection();
 			Connection conn = jdbc.startConnection();
 
 			PreparedStatement stmt;
 			try {
 				
-				//Sellor Shares Updation
+				//Seller Shares Updation
 				stmt = conn.prepareStatement("SELECT * FROM sellerStock WHERE sellerStock.sellerName='" + response.getSellerName() + "' AND sellerStock.companyName='"+response.getCompanyName()+ "'");
 				ResultSet rs1  = stmt.executeQuery();
 				System.out.println(rs1 + " records present");
-				if(rs1.wasNull()) {
-					stmt = conn.prepareStatement("INSERT INTO sellerStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
+				if((!rs1.isBeforeFirst())) {
+					String query = "INSERT INTO sellerStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+","+response.getNumberOfShares()+")";
+					System.out.println(query);
+					stmt = conn.prepareStatement(query);
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records inserted");
 				} else {
-					stmt = conn.prepareStatement("UPDATE sellerStock SET stockPrice=" + response.getStockPrice()
-					+"numberOfShares=" + response.getNumberOfShares()
-					+ " WHERE companyName='" + response.getCompanyName() + "sellerName=" + response.getSellerName()
-					+"'");
+					String query = "UPDATE sellerStock SET stockPrice=" + response.getStockPrice()
+					+", numberOfShares=" + response.getNumberOfShares()
+					+ " WHERE companyName='" + response.getCompanyName() + "' AND sellerName = '" + response.getSellerName()
+					+"'";
+					System.out.println(query);
+					stmt = conn.prepareStatement(query);
 
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records updated");
 				}
 			} catch (Exception e) {
-				System.out.println("No Such Company Found");
+				System.out.println("Error"+e);
 			}
 
 		}
@@ -80,22 +84,25 @@ public class TestControllerBroker {
 				//Buyer Shares Updation
 				stmt = conn.prepareStatement("SELECT * FROM buyerStock WHERE buyerStock.buyerName='" + response.getBuyerName() + "' AND buyerStock.companyName='"+response.getCompanyName()+ "'");
 				ResultSet rs1  = stmt.executeQuery();
-				System.out.println(rs1 + " records present");
-				if(rs1.wasNull()) {
-					stmt = conn.prepareStatement("INSERT INTO buyerStock VALUES ('"+response.getBuyerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
+//				System.out.println(rs1.getString(1) + " records present");
+				
+				if((!rs1.isBeforeFirst())) {
+					String query = "INSERT INTO buyerStock VALUES ('"+response.getBuyerName()+"','"+response.getCompanyName()+"',"+response.getNumberOfShares()+")";
+					System.out.println(query);
+					stmt = conn.prepareStatement(query);
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records inserted");
 				} else {
-					stmt = conn.prepareStatement("UPDATE buyerStock SET stockPrice=" + response.getStockPrice()
-					+"numberOfShares=" + response.getNumberOfShares()
-					+ " WHERE companyName='" + response.getCompanyName() + "buyerName=" + response.getBuyerName()
-					+"'");
-
+					String query = "UPDATE buyerStock SET numberOfShares=" + response.getNumberOfShares()
+					+ " WHERE companyName='" + response.getCompanyName() + "' AND buyerName='" + response.getBuyerName()
+					+"'";
+					System.out.println(query);
+					stmt = conn.prepareStatement(query);
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records updated");
 				}
 			} catch (Exception e) {
-				System.out.println("No Such Company Found");
+				System.out.println("Error"+e);
 			}
 		}
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);

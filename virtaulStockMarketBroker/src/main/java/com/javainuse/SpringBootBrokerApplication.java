@@ -8,12 +8,12 @@ import com.javainuse.controllers.TestControllerBroker;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-public class SpringBootHelloWorldApplication {
+public class SpringBootBrokerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SpringBootHelloWorldApplication.class, args);
+		SpringApplication.run(SpringBootBrokerApplication.class, args);
 		
-		TestControllerBroker testControllerStock = new TestControllerBroker();
-		testControllerStock.scheduledJob();
+//		TestControllerBroker testControllerStock = new TestControllerBroker();
+//		testControllerStock.scheduledJob();
 	}
 }

@@ -37,10 +37,10 @@ CREATE TABLE `buyerStock` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `sellorStock`
+-- Table structure for table `sellerStock`
 --
 
-CREATE TABLE `sellorStock` (
+CREATE TABLE `sellerStock` (
   `sellerName` text NOT NULL,
   `companyName` text NOT NULL,
   `stockPrice` float NOT NULL,

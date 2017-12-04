@@ -20,8 +20,7 @@ public class jdbcConnection {
 		System.out.println("MySQL JDBC Driver Registered!");
 		
 		try {
-			connection = DriverManager
-			.getConnection("jdbc:mysql://localhost/broker","root", "");
+			connection = DriverManager.getConnection("jdbc:mysql://localhost/broker","root", "");
 
 		} catch (SQLException e) {
 			System.out.println("Connection Failed! Check output console");
