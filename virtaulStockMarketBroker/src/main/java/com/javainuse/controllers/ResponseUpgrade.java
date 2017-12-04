@@ -16,25 +16,25 @@ public void setStockPrice(double stockPrice) {
 public String getCompanyName() {
 	return companyName;
 }
-public void setCompanyName(String company_Name) {
-	companyName = company_Name;
+public void setCompanyName(String companyName) {
+	this.companyName = companyName;
 }
 public String getBuyerName() {
 	return buyerName;
 }
-public void setBuyerName(String buyer) {
-	buyerName = buyer;
+public void setBuyerName(String buyerName) {
+	this.buyerName = buyerName;
 }
 public String getSellerName() {
 	return sellerName;
 }
-public void setSellerName(String seller) {
-	sellerName = seller;
+public void setSellerName(String sellerName) {
+	this.sellerName = sellerName;
 }
 public int getNumberOfShares() {
 	return numberOfShares;
 }
-public void setNumberOfShares(int number_of_shares) {
-	numberOfShares = number_of_shares;
+public void setNumberOfShares(int numberOfShares) {
+	this.numberOfShares = numberOfShares;
 }
 }

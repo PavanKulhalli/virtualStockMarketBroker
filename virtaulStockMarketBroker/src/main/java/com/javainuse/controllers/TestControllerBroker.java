@@ -179,14 +179,14 @@ public class TestControllerBroker {
 							}
 						}
 						if(numberOfSharesToBuy != 0) {
-							stmt = conn.prepareStatement("UPDATE buyerStock "
+							stmt = conn.prepareStatement("UPDATE buyerStock"
 							+"numberOfShares=" + numberOfSharesToBuy
 							+ " WHERE companyName='" + companyName + "buyerName=" + buyerName
 							+"'");
 							int i = stmt.executeUpdate();
 							System.out.println(i + " records updated");
 						} else {
-							stmt = conn.prepareStatement("Delete buyerStock "
+							stmt = conn.prepareStatement("Delete buyerStock"
 							+ " WHERE companyName='" + companyName + "buyerName=" + buyerName
 							+"'");
 							int i = stmt.executeUpdate();
