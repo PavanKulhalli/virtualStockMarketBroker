@@ -32,7 +32,7 @@ public class TestControllerBroker {
 
 	
 	@SuppressWarnings("resource")
-	@RequestMapping(value = "/sellorStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@RequestMapping(value = "/sellerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ResponseUpgrade> getSellorStock(@RequestBody ResponseUpgrade response) {
 		if (response != null) {
 			
@@ -43,15 +43,15 @@ public class TestControllerBroker {
 			try {
 				
 				//Sellor Shares Updation
-				stmt = conn.prepareStatement("SELECT * FROM sellorStock WHERE sellorStock.sellerName='" + response.getSellerName() + "' AND sellorStock.companyName='"+response.getCompanyName()+ "'");
+				stmt = conn.prepareStatement("SELECT * FROM sellerStock WHERE sellerStock.sellerName='" + response.getSellerName() + "' AND sellerStock.companyName='"+response.getCompanyName()+ "'");
 				ResultSet rs1  = stmt.executeQuery();
 				System.out.println(rs1 + " records present");
 				if(rs1.wasNull()) {
-					stmt = conn.prepareStatement("INSERT INTO sellorStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
+					stmt = conn.prepareStatement("INSERT INTO sellerStock VALUES ('"+response.getSellerName()+"','"+response.getCompanyName()+"',"+response.getStockPrice()+"',"+response.getNumberOfShares()+"'");;
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records inserted");
 				} else {
-					stmt = conn.prepareStatement("UPDATE sellorStock SET stockPrice=" + response.getStockPrice()
+					stmt = conn.prepareStatement("UPDATE sellerStock SET stockPrice=" + response.getStockPrice()
 					+"numberOfShares=" + response.getNumberOfShares()
 					+ " WHERE companyName='" + response.getCompanyName() + "sellerName=" + response.getSellerName()
 					+"'");
@@ -145,7 +145,7 @@ public class TestControllerBroker {
 						companyName = rs.getString(2);
 						numberOfSharesToBuy = rs.getInt(3);
 						
-						stmt = conn.prepareStatement("SELECT * FROM sellorStock WHERE sellorStock.companyName='"+companyName+ "'");
+						stmt = conn.prepareStatement("SELECT * FROM sellerStock WHERE sellerStock.companyName='"+companyName+ "'");
 						ResultSet rs1  = stmt.executeQuery();
 						System.out.println(rs1 + " records present");
 						while (rs1.next() && numberOfSharesToBuy > 0) {
@@ -177,13 +177,13 @@ public class TestControllerBroker {
 							finalListOfStock.add(json.toString());
 							
 							if(numberOfSharesToSell != 0) {
-								stmt = conn.prepareStatement("UPDATE sellorStock SET numberOfShares=" + numberOfSharesToSell
+								stmt = conn.prepareStatement("UPDATE sellerStock SET numberOfShares=" + numberOfSharesToSell
 								+ " WHERE companyName='" + companyName + "sellerName=" + sellerName
 								+"'");
 								int i = stmt.executeUpdate();
 								System.out.println(i + " records updated");
 							} else {
-								stmt = conn.prepareStatement("Delete sellorStock "
+								stmt = conn.prepareStatement("Delete sellerStock "
 								+ " WHERE companyName='" + companyName + "sellerName=" + sellerName
 								+"'");
 								int i = stmt.executeUpdate();
