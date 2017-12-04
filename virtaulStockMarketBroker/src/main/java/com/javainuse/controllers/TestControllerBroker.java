@@ -106,17 +106,17 @@ public class TestControllerBroker {
 
 	
 
-	private void postToStockMarket(ResponseUpgrade response) {
+	private void postToStockMarket(List<String> request) {
 		List<ServiceInstance> instances = discoveryClient.getInstances("StockMarket");
 		ServiceInstance serviceInstance = instances.get(0);
 		String baseUrl = serviceInstance.getUri().toString();
-		ResponseEntity<?> response1 = new RestTemplate().postForEntity(baseUrl, response, String.class);
-		System.out.println(response1.getStatusCodeValue());
+		ResponseEntity<Object[]> response = new RestTemplate().postForEntity(baseUrl, request, Object[].class);
+		System.out.println(response.getStatusCodeValue());
 
 	}
 
 	
-	private void scheduledJob() {
+	public void scheduledJob() {
 
 		new java.util.Timer().schedule(new java.util.TimerTask() {
 			@SuppressWarnings("resource")
@@ -128,7 +128,9 @@ public class TestControllerBroker {
 				Connection conn = jdbc.startConnection();
 
 				PreparedStatement stmt;
+//				List<Object> finalListOfStock = new ArrayList<Object>();
 				List<String> finalListOfStock = new ArrayList<String>();
+				
 				try {
 					//Buyer Shares Updation
 					stmt = conn.prepareStatement("SELECT * FROM buyerStock");
@@ -160,10 +162,20 @@ public class TestControllerBroker {
 								numberOfSharesToSell = numberOfSharesToSell - numberOfSharesToBuy;
 							}
 							
-							finalListOfStock.add(companyName);
-							finalListOfStock.add(sellerName);
-							finalListOfStock.add(buyerName);
-							finalListOfStock.add(String.valueOf(stockPrice));
+//							finalListOfStock.add(companyName);
+//							finalListOfStock.add(sellerName);
+//							finalListOfStock.add(buyerName);
+//							finalListOfStock.add(String.valueOf(stockPrice));
+							JSONObject json = new JSONObject();
+							
+							json.put("companyName",companyName);
+							json.put("sellerName", sellerName);
+							json.put("buyerName",buyerName);
+							json.put("stockPrice", stockPrice);
+							json.put("numberOfShares",numberOfSharesBought);
+							
+							finalListOfStock.add(json.toString());
+							
 							if(numberOfSharesToSell != 0) {
 								stmt = conn.prepareStatement("UPDATE sellorStock SET numberOfShares=" + numberOfSharesToSell
 								+ " WHERE companyName='" + companyName + "sellerName=" + sellerName
@@ -199,7 +211,7 @@ public class TestControllerBroker {
 				}
 				
 				try {
-//					postToStockMarket(response);
+					postToStockMarket(finalListOfStock);
 
 				} catch (Exception e) {
 					System.out.println("Error in connection with Stock Market");
