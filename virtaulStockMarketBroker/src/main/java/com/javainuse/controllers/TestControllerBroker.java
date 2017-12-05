@@ -5,6 +5,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.cloud.client.ServiceInstance;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -113,11 +116,18 @@ public class TestControllerBroker {
 
 	
 
-	private void postToStockMarket(List<String> request) {
-		List<ServiceInstance> instances = discoveryClient.getInstances("StockMarket");
+	private void postToStockMarket(JSONArray list) {
+		System.out.println("postToStockMarket");
+		List<ServiceInstance> instances = discoveryClient.getInstances("stockUpdates");
+		System.out.println("instances"+instances);
 		ServiceInstance serviceInstance = instances.get(0);
 		String baseUrl = serviceInstance.getUri().toString();
-		ResponseEntity<Object[]> response = new RestTemplate().postForEntity(baseUrl, request, Object[].class);
+		System.out.println("baseUrl" + baseUrl);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+		HttpEntity<JSONArray> entity = new HttpEntity<JSONArray>(list, headers);
+		ResponseEntity<String> response = new RestTemplate().postForEntity(baseUrl, entity, String.class);
 		System.out.println(response.getStatusCodeValue());
 
 	}
@@ -171,12 +181,6 @@ public class TestControllerBroker {
 								numberOfSharesToSell = numberOfSharesToSell - numberOfSharesToBuy;
 							}
 							System.out.println("numberOfSharesBought" + numberOfSharesBought +"numberOfSharesToBuy"+numberOfSharesToBuy +"numberOfSharesToSell"+numberOfSharesToSell);
-//							finalListOfStock.add(companyName);
-//							finalListOfStock.add(sellerName);
-//							finalListOfStock.add(buyerName);
-//							finalListOfStock.add(String.valueOf(stockPrice));
-							
-							
 							
 							JSONObject json = new JSONObject();
 							
@@ -232,7 +236,7 @@ public class TestControllerBroker {
 				
 				try {
 					System.out.println("Posting it to Stock Market" +finalListOfStock);
-//					postToStockMarket(finalListOfStock);
+					postToStockMarket(new JSONArray(finalListOfStock));
 
 				} catch (Exception e) {
 					System.out.println("Error"+e);
