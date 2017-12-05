@@ -33,6 +33,8 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 public class TestControllerBroker {
 
+
+	private DiscoveryClient discoveryClient;
 	
 	@SuppressWarnings("resource")
 	@RequestMapping(value = "/sellerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -77,6 +79,7 @@ public class TestControllerBroker {
 	@SuppressWarnings("resource")
 	@RequestMapping(value = "/buyerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ResponseUpgrade> getBuyerStock(@RequestBody ResponseUpgrade response) {
+		System.out.println("HERE");
 		if (response != null) {
 			
 			jdbcConnection jdbc = new jdbcConnection();
@@ -84,6 +87,7 @@ public class TestControllerBroker {
 
 			PreparedStatement stmt;
 			try {
+				
 				//Buyer Shares Updation
 				stmt = conn.prepareStatement("SELECT * FROM buyerStock WHERE buyerStock.buyerName='" + response.getBuyerName() + "' AND buyerStock.companyName='"+response.getCompanyName()+ "'");
 				ResultSet rs1  = stmt.executeQuery();
@@ -109,26 +113,22 @@ public class TestControllerBroker {
 			}
 		}
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
-	}
-	
-	
-	private DiscoveryClient discoveryClient;
+	}	
 
-	
-
-	private void postToStockMarket(JSONArray list) {
+	private void postToStockMarket(List<String> list) {
 		System.out.println("postToStockMarket");
-		List<ServiceInstance> instances = discoveryClient.getInstances("stockUpdates");
-		System.out.println("instances"+instances);
-		ServiceInstance serviceInstance = instances.get(0);
-		String baseUrl = serviceInstance.getUri().toString();
-		System.out.println("baseUrl" + baseUrl);
+//		List<ServiceInstance> instances = discoveryClient.getInstances("Bank");
+//		System.out.println("instances"+instances);
+//		ServiceInstance serviceInstance = instances.get(0);
+//		String baseUrl = serviceInstance.getUri().toString();
+//		System.out.println("baseUrl: " + baseUrl);
+		String baseUrl = "http://localhost:8093/stockMarket";
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-		HttpEntity<JSONArray> entity = new HttpEntity<JSONArray>(list, headers);
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		System.out.println(list.get(0).getClass().getName());
+		HttpEntity<List<String>> entity = new HttpEntity<List<String>>(list, headers);
 		ResponseEntity<String> response = new RestTemplate().postForEntity(baseUrl, entity, String.class);
-		System.out.println(response.getStatusCodeValue());
+		System.out.println(response);
 
 	}
 
@@ -236,10 +236,10 @@ public class TestControllerBroker {
 				
 				try {
 					System.out.println("Posting it to Stock Market" +finalListOfStock);
-					postToStockMarket(new JSONArray(finalListOfStock));
+					postToStockMarket((List<String>) finalListOfStock);
 
 				} catch (Exception e) {
-					System.out.println("Error"+e);
+					e.printStackTrace();
 				}
 			}
 		}, 10000);
