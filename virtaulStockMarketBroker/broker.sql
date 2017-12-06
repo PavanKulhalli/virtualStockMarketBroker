@@ -31,6 +31,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `buyerStock` (
   `buyerName` text NOT NULL,
   `companyName` text NOT NULL,
+  `stockPrice` float NOT NULL,
   `numberOfShares` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
