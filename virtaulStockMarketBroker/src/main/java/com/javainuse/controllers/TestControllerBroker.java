@@ -1,9 +1,13 @@
 package com.javainuse.controllers;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.Timer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -115,7 +119,7 @@ public class TestControllerBroker {
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
 	}	
 
-	private void postToStockMarket(List<String> list) {
+	private void postToStockMarket(List<ResponseUpgrade> list) {
 		System.out.println("postToStockMarket");
 //		List<ServiceInstance> instances = discoveryClient.getInstances("Bank");
 //		System.out.println("instances"+instances);
@@ -126,126 +130,131 @@ public class TestControllerBroker {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		System.out.println(list.get(0).getClass().getName());
-		HttpEntity<List<String>> entity = new HttpEntity<List<String>>(list, headers);
-		ResponseEntity<String> response = new RestTemplate().postForEntity(baseUrl, entity, String.class);
+		HttpEntity<List<ResponseUpgrade>> entity = new HttpEntity<List<ResponseUpgrade>>(list, headers);
+		ResponseEntity<ResponseUpgrade> response = new RestTemplate().postForEntity(baseUrl, entity, ResponseUpgrade.class);
 		System.out.println(response);
 
 	}
 
 	
 	public void scheduledJob() {
+		Timer timer = new Timer(10000, new ActionListener() {
+			  @Override
+			  public void actionPerformed(ActionEvent arg0) {
+			    // Code to be executed
+				  System.out.println(" Scheduler Called");
+				  jdbcConnection jdbc = new jdbcConnection();
+					Connection conn = jdbc.startConnection();
 
-		new java.util.Timer().schedule(new java.util.TimerTask() {
-			@SuppressWarnings("resource")
-			@Override
-			public void run() {
-				
-				System.out.println(" Scheduler Called");
-				jdbcConnection jdbc = new jdbcConnection();
-				Connection conn = jdbc.startConnection();
-
-				PreparedStatement stmt;
-//				List<Object> finalListOfStock = new ArrayList<Object>();
-				List<String> finalListOfStock = new ArrayList<String>();
-				
-				try {
-					System.out.println(" scheduledJob running");
-					//Buyer Shares Updation
-					stmt = conn.prepareStatement("SELECT * FROM buyerStock");
-					ResultSet rs  = stmt.executeQuery();
-					System.out.println(rs + " records present");
-					double stockPrice;
-					String buyerName, companyName, sellerName;
-					int numberOfSharesToBuy, numberOfSharesToSell, numberOfSharesBought;
-					while (rs.next()) {
-						
-						buyerName = rs.getString(1);
-						companyName = rs.getString(2);
-						numberOfSharesToBuy = rs.getInt(3);
-						
-						stmt = conn.prepareStatement("SELECT * FROM sellerStock WHERE sellerStock.companyName='"+companyName+ "'");
-						ResultSet rs1  = stmt.executeQuery();
-						System.out.println(rs1 + " records present");
-						while (rs1.next() && numberOfSharesToBuy > 0) {
-							sellerName = rs1.getString(1);
-							stockPrice = rs1.getDouble(3);
-							numberOfSharesToSell = rs1.getInt(4);
-							System.out.println("sellerName:"+ sellerName + " stockPrice" + stockPrice +" numberOfSharesToSell" + numberOfSharesToSell);
-							if(numberOfSharesToBuy >= numberOfSharesToSell) {
-								numberOfSharesBought = numberOfSharesToBuy - (numberOfSharesToBuy - numberOfSharesToSell);
-								numberOfSharesToBuy = numberOfSharesToBuy - numberOfSharesBought;
-								numberOfSharesToSell = 0;
-							} else {
-								numberOfSharesBought = numberOfSharesToSell - (numberOfSharesToSell - numberOfSharesToBuy);
-								numberOfSharesToBuy = 0;
-								numberOfSharesToSell = numberOfSharesToSell - numberOfSharesToBuy;
+					PreparedStatement stmt;
+//					List<Object> finalListOfStock = new ArrayList<Object>();
+					List<ResponseUpgrade> finalListOfStock = new ArrayList<ResponseUpgrade>();
+					
+					try {
+						System.out.println(" scheduledJob running");
+						//Buyer Shares Updation
+						stmt = conn.prepareStatement("SELECT * FROM buyerStock");
+						ResultSet rs  = stmt.executeQuery();
+						System.out.println(rs + " records present");
+						double stockPrice;
+						String buyerName, companyName, sellerName;
+						int numberOfSharesToBuy, numberOfSharesToSell, numberOfSharesBought;
+						while (rs.next()) {
+							
+							buyerName = rs.getString(1);
+							companyName = rs.getString(2);
+							numberOfSharesToBuy = rs.getInt(3);
+							
+							stmt = conn.prepareStatement("SELECT * FROM sellerStock WHERE sellerStock.companyName='"+companyName+ "'");
+							ResultSet rs1  = stmt.executeQuery();
+							System.out.println(rs1 + " records present");
+							while (rs1.next() && numberOfSharesToBuy > 0) {
+								sellerName = rs1.getString(1);
+								stockPrice = rs1.getDouble(3);
+								numberOfSharesToSell = rs1.getInt(4);
+								System.out.println("sellerName:"+ sellerName + " stockPrice" + stockPrice +" numberOfSharesToSell" + numberOfSharesToSell);
+								if(numberOfSharesToBuy >= numberOfSharesToSell) {
+									numberOfSharesBought = numberOfSharesToBuy - (numberOfSharesToBuy - numberOfSharesToSell);
+									numberOfSharesToBuy = numberOfSharesToBuy - numberOfSharesBought;
+									numberOfSharesToSell = 0;
+								} else {
+									numberOfSharesBought = numberOfSharesToSell - (numberOfSharesToSell - numberOfSharesToBuy);
+									numberOfSharesToBuy = 0;
+									numberOfSharesToSell = numberOfSharesToSell - numberOfSharesToBuy;
+								}
+								System.out.println("numberOfSharesBought" + numberOfSharesBought +"numberOfSharesToBuy"+numberOfSharesToBuy +"numberOfSharesToSell"+numberOfSharesToSell);
+								
+								JSONObject json = new JSONObject();
+								/*
+								json.put("companyName",companyName);
+								json.put("sellerName", sellerName);
+								json.put("buyerName",buyerName);
+								json.put("stockPrice", stockPrice);
+								json.put("numberOfShares",numberOfSharesBought);
+								*/
+								ResponseUpgrade responseUpgrade = new ResponseUpgrade();
+								responseUpgrade.setCompanyName(companyName);
+								responseUpgrade.setSellerName(sellerName);
+								responseUpgrade.setBuyerName(buyerName);
+								responseUpgrade.setStockPrice(stockPrice);
+								responseUpgrade.setNumberOfShares(numberOfSharesBought);
+								
+								System.out.println("Array List companyName:"+ companyName + " sellerName:"+sellerName+ " buyerName"+buyerName+" stockPrice"+stockPrice+" numberOfShares"+numberOfSharesBought);
+								finalListOfStock.add(responseUpgrade);
+								
+								if(numberOfSharesToSell != 0) {
+									String query = "UPDATE sellerStock SET numberOfShares=" + numberOfSharesToSell
+											+ " WHERE companyName='" + companyName + "' AND sellerName='" + sellerName
+											+"'";
+									System.out.println(query);
+									stmt = conn.prepareStatement(query);
+									int i = stmt.executeUpdate();
+									System.out.println(i + " records updated for seller: "+ sellerName + "Company: "+ companyName);
+								} else {
+									String query = "DELETE from sellerStock "
+											+ " WHERE companyName='" + companyName + "' AND sellerName= '" + sellerName
+											+"'";
+									System.out.println(query);
+									stmt = conn.prepareStatement(query);
+									int i = stmt.executeUpdate();
+									System.out.println(i + " records deleted for seller: "+ sellerName + "Company: "+ companyName);
+								}
 							}
-							System.out.println("numberOfSharesBought" + numberOfSharesBought +"numberOfSharesToBuy"+numberOfSharesToBuy +"numberOfSharesToSell"+numberOfSharesToSell);
-							
-							JSONObject json = new JSONObject();
-							
-							json.put("companyName",companyName);
-							json.put("sellerName", sellerName);
-							json.put("buyerName",buyerName);
-							json.put("stockPrice", stockPrice);
-							json.put("numberOfShares",numberOfSharesBought);
-							System.out.println("Array List companyName:"+ companyName + " sellerName:"+sellerName+ " buyerName"+buyerName+" stockPrice"+stockPrice+" numberOfShares"+numberOfSharesBought);
-							finalListOfStock.add(json.toString());
-							
-							if(numberOfSharesToSell != 0) {
-								String query = "UPDATE sellerStock SET numberOfShares=" + numberOfSharesToSell
-										+ " WHERE companyName='" + companyName + "' AND sellerName='" + sellerName
+							if(numberOfSharesToBuy != 0) {
+								String query = "UPDATE buyerStock SET"
+										+" numberOfShares= " + numberOfSharesToBuy
+										+ " WHERE companyName='" + companyName + "' AND buyerName='" + buyerName
 										+"'";
 								System.out.println(query);
 								stmt = conn.prepareStatement(query);
 								int i = stmt.executeUpdate();
-								System.out.println(i + " records updated for seller: "+ sellerName + "Company: "+ companyName);
+								System.out.println(i + " records updated for Buyer: "+ buyerName + "Company: "+ companyName);
 							} else {
-								String query = "DELETE from sellerStock "
-										+ " WHERE companyName='" + companyName + "' AND sellerName= '" + sellerName
+								String query = "DELETE from buyerStock"
+										+ " WHERE companyName='" + companyName + "' AND buyerName='" + buyerName
 										+"'";
 								System.out.println(query);
 								stmt = conn.prepareStatement(query);
 								int i = stmt.executeUpdate();
-								System.out.println(i + " records deleted for seller: "+ sellerName + "Company: "+ companyName);
+								System.out.println(i + " records deleted for Buyer: "+ buyerName + "Company: "+ companyName);
 							}
 						}
-						if(numberOfSharesToBuy != 0) {
-							String query = "UPDATE buyerStock SET"
-									+" numberOfShares= " + numberOfSharesToBuy
-									+ " WHERE companyName='" + companyName + "' AND buyerName='" + buyerName
-									+"'";
-							System.out.println(query);
-							stmt = conn.prepareStatement(query);
-							int i = stmt.executeUpdate();
-							System.out.println(i + " records updated for Buyer: "+ buyerName + "Company: "+ companyName);
-						} else {
-							String query = "DELETE from buyerStock"
-									+ " WHERE companyName='" + companyName + "' AND buyerName='" + buyerName
-									+"'";
-							System.out.println(query);
-							stmt = conn.prepareStatement(query);
-							int i = stmt.executeUpdate();
-							System.out.println(i + " records deleted for Buyer: "+ buyerName + "Company: "+ companyName);
-						}
+						
+					} catch (Exception e) {
+						System.out.println("Error:" + e);
 					}
 					
-				} catch (Exception e) {
-					System.out.println("Error:" + e);
-				}
-				
-				try {
-					System.out.println("Posting it to Stock Market" +finalListOfStock);
-					postToStockMarket((List<String>) finalListOfStock);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}, 10000);
-
+					try {
+						System.out.println("Posting it to Stock Market" +finalListOfStock);
+						if(finalListOfStock.size() > 0) {
+							postToStockMarket((List<ResponseUpgrade>) finalListOfStock);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+			  }
+			});
+			timer.setRepeats(true); // Only execute once
+			timer.start(); 
 	}
-	
-
-
 }
