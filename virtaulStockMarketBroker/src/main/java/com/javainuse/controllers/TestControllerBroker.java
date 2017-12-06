@@ -12,6 +12,7 @@ import javax.swing.Timer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpEntity;
@@ -38,12 +39,17 @@ import org.springframework.web.client.RestTemplate;
 public class TestControllerBroker {
 
 
+	@Autowired 
 	private DiscoveryClient discoveryClient;
+	public boolean startFlag;
+	public static String baseUrl;
 	
 	@SuppressWarnings("resource")
 	@RequestMapping(value = "/sellerStock", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public ResponseEntity<ResponseUpgrade> getSellerStock(@RequestBody ResponseUpgrade response) {
 		if (response != null) {
+			
+			setBaseUrl();
 			System.out.println("In sellerStock");
 			jdbcConnection jdbc = new jdbcConnection();
 			Connection conn = jdbc.startConnection();
@@ -120,21 +126,29 @@ public class TestControllerBroker {
 		return new ResponseEntity<ResponseUpgrade>(response, HttpStatus.OK);
 	}	
 
+	private void setBaseUrl() {
+		List<ServiceInstance> instances = discoveryClient.getInstances("stockUpdates");
+		System.out.println("instances"+instances);
+		ServiceInstance serviceInstance = instances.get(0);
+		baseUrl = serviceInstance.getUri().toString();
+		System.out.println("baseUrl: " + baseUrl);
+		baseUrl += "/stockMarket";
+	}
 	private void postToStockMarket(List<ResponseUpgrade> list) {
 		System.out.println("postToStockMarket");
-//		List<ServiceInstance> instances = discoveryClient.getInstances("Bank");
-//		System.out.println("instances"+instances);
-//		ServiceInstance serviceInstance = instances.get(0);
-//		String baseUrl = serviceInstance.getUri().toString();
-//		System.out.println("baseUrl: " + baseUrl);
-		String baseUrl = "http://localhost:8093/stockMarket";
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
-		System.out.println(list.get(0).getClass().getName());
-		HttpEntity<List<ResponseUpgrade>> entity = new HttpEntity<List<ResponseUpgrade>>(list, headers);
-		ResponseEntity<ResponseUpgrade> response = new RestTemplate().postForEntity(baseUrl, entity, ResponseUpgrade.class);
-		System.out.println(response);
-
+		
+		if(baseUrl != null) {
+			System.out.println("BASE URL "+baseUrl);
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+			System.out.println(list.get(0).getClass().getName());
+			HttpEntity<List<ResponseUpgrade>> entity = new HttpEntity<List<ResponseUpgrade>>(list, headers);
+			ResponseEntity<ResponseUpgrade> response = new RestTemplate().postForEntity(baseUrl, entity, ResponseUpgrade.class);
+			System.out.println(response);
+		}else {
+			System.out.println("BASE URL "+baseUrl);
+		}
+//		String baseUrl = "http://localhost:8093/stockMarket";
 	}
 
 	
