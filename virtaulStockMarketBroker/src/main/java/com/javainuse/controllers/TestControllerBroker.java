@@ -78,6 +78,7 @@ public class TestControllerBroker {
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records updated");
 				}
+				conn.close();
 			} catch (Exception e) {
 				System.out.println("Error"+e);
 			}
@@ -92,6 +93,7 @@ public class TestControllerBroker {
 		System.out.println("HERE");
 		if (response != null) {
 			
+			setBaseUrl();
 			jdbcConnection jdbc = new jdbcConnection();
 			Connection conn = jdbc.startConnection();
 
@@ -119,6 +121,7 @@ public class TestControllerBroker {
 					int i = stmt.executeUpdate();
 					System.out.println(i + " records updated");
 				}
+				conn.close();
 			} catch (Exception e) {
 				System.out.println("Error"+e);
 			}
@@ -251,7 +254,7 @@ public class TestControllerBroker {
 								System.out.println(i + " records deleted for Buyer: "+ buyerName + "Company: "+ companyName);
 							}
 						}
-						
+					conn.close();
 					} catch (Exception e) {
 						System.out.println("Error:" + e);
 					}
